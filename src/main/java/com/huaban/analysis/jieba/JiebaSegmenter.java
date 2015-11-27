@@ -84,6 +84,7 @@ public class JiebaSegmenter {
         List<SegToken> tokens = new ArrayList<SegToken>();
         StringBuilder sb = new StringBuilder();
         int offset = 0;
+        int offset2 = 0;    // Added by Edwin to solve the highlighting <em> tag problem
         for (int i = 0; i < paragraph.length(); ++i) {
             char ch = CharacterUtil.regularize(paragraph.charAt(i));
             if (CharacterUtil.ccFind(ch))
@@ -92,27 +93,26 @@ public class JiebaSegmenter {
                 if (sb.length() > 0) {
                     // process
                     if (mode == SegMode.SEARCH) {
-                        for (String word : sentenceProcess(sb.toString())) {
+                        for (Word word : sentenceProcess(sb.toString())) {
                             tokens.add(new SegToken(word, offset, offset += word.length()));
                         }
-                    }
-                    else {
-                        for (String token : sentenceProcess(sb.toString())) {
+                    } else {
+                        for (Word token : sentenceProcess(sb.toString())) {
                             if (token.length() > 2) {
-                                String gram2;
+                                Word gram2;
                                 int j = 0;
                                 for (; j < token.length() - 1; ++j) {
-                                    gram2 = token.substring(j, j + 2);
-                                    if (wordDict.containsWord(gram2))
+                                    gram2 = token.subSequence(j, j + 2);
+                                    if (wordDict.containsWord(gram2.getToken()))
                                         tokens.add(new SegToken(gram2, offset + j, offset + j + 2));
                                 }
                             }
                             if (token.length() > 3) {
-                                String gram3;
+                                Word gram3;
                                 int j = 0;
                                 for (; j < token.length() - 2; ++j) {
-                                    gram3 = token.substring(j, j + 3);
-                                    if (wordDict.containsWord(gram3))
+                                    gram3 = token.subSequence(j, j + 3);
+                                    if (wordDict.containsWord(gram3.getToken()))
                                         tokens.add(new SegToken(gram3, offset + j, offset + j + 3));
                                 }
                             }
@@ -120,41 +120,45 @@ public class JiebaSegmenter {
                         }
                     }
                     sb = new StringBuilder();
-                    offset = i;
+                    offset = i+1;
+                    offset2 = offset-1;
                 }
                 if (wordDict.containsWord(paragraph.substring(i, i + 1)))
-                    tokens.add(new SegToken(paragraph.substring(i, i + 1), offset, ++offset));
+                    tokens.add(new SegToken(wordDict.getWord(paragraph.substring(i, i + 1)), offset, ++offset));
                 else
-                    tokens.add(new SegToken(paragraph.substring(i, i + 1), offset, ++offset));
+                    tokens.add(new SegToken(Word.createWord(paragraph.substring(i, i + 1)), offset, ++offset));
             }
         }
         if (sb.length() > 0)
             if (mode == SegMode.SEARCH) {
-                for (String token : sentenceProcess(sb.toString())) {
-                    tokens.add(new SegToken(token, offset, offset += token.length()));
+                for (Word token : sentenceProcess(sb.toString())) {
+                    // tokens.add(new SegToken(token, offset, offset += token.length()));
+                    tokens.add(new SegToken(token, offset2, offset2 += token.length()));         // Change to offset2 by Edwin
                 }
-            }
-            else {
-                for (String token : sentenceProcess(sb.toString())) {
+            } else {
+                for (Word token : sentenceProcess(sb.toString())) {
                     if (token.length() > 2) {
-                        String gram2;
+                        Word gram2;
                         int j = 0;
                         for (; j < token.length() - 1; ++j) {
-                            gram2 = token.substring(j, j + 2);
-                            if (wordDict.containsWord(gram2))
-                                tokens.add(new SegToken(gram2, offset + j, offset + j + 2));
+                            gram2 = token.subSequence(j, j + 2);
+                            if (wordDict.containsWord(gram2.getToken()))
+                                // tokens.add(new SegToken(gram2, offset + j, offset + j + 2));
+                                tokens.add(new SegToken(gram2, offset2 + j, offset2 + j + 2));      // Change to offset2 by Edwin
                         }
                     }
                     if (token.length() > 3) {
-                        String gram3;
+                        Word gram3;
                         int j = 0;
                         for (; j < token.length() - 2; ++j) {
-                            gram3 = token.substring(j, j + 3);
-                            if (wordDict.containsWord(gram3))
-                                tokens.add(new SegToken(gram3, offset + j, offset + j + 3));
+                            gram3 = token.subSequence(j, j + 3);
+                            if (wordDict.containsWord(gram3.getToken()))
+                                // tokens.add(new SegToken(gram3, offset + j, offset + j + 3));
+                                tokens.add(new SegToken(gram3, offset2 + j, offset2 + j + 3));      // Change to offset2 by Edwin
                         }
                     }
-                    tokens.add(new SegToken(token, offset, offset += token.length()));
+                    // tokens.add(new SegToken(token, offset, offset += token.length()));
+                    tokens.add(new SegToken(token, offset2, offset2 += token.length()));        // Change to offset2 by Edwin
                 }
             }
 
